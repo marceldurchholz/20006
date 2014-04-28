@@ -26,13 +26,12 @@ try {
 	var camCorrectOrientationDefault = ['correctOrientation', false];
 	var camSaveToPhotoAlbumDefault = ['saveToPhotoAlbum', true];
 
-	var badgeToggledOn = false;
-	var autoLockIsDisabled = false;
-	var cdvBadge = null;
-	var isMobile = {};
-	
+	// var badgeToggledOn = false;
+	// var autoLockIsDisabled = false;
+	// var cdvBadge = null;
 	var me = new Object();
 	
+	var isMobile = {};	
 	isMobile = {
 		Android: function() {
 			// return navigator.userAgent.match(/Android/i) ? true : false;
@@ -207,7 +206,6 @@ try {
 		},
 			
 		findVideoById: function(id) {
-			// alert('outer searching for id: ' + id);
 			var deferred = $.Deferred();
 			if (isPhoneGap()) {
 				this.db.transaction(
@@ -224,11 +222,6 @@ try {
 			}
 			else {
 				deferred.resolve();
-				/*
-				setTimeout(function() {
-					deferred.resolve();
-				}, 3000);
-				*/
 			}
 			return deferred.promise();
 		},
@@ -236,11 +229,25 @@ try {
 		createTables: function() {
 			this.db.transaction(
 				function(tx) { 
-					// tx.executeSql("CREATE TABLE IF NOT EXISTS users ( username VARCHAR(255) PRIMARY KEY, password VARCHAR(255))");
 					tx.executeSql("CREATE TABLE IF NOT EXISTS videos ( " + "id INTEGER PRIMARY KEY AUTOINCREMENT, " + "videoid VARCHAR(255), " + "videourl VARCHAR(255))");
 				},
-				function() { 
+				function(error) { 
 					// alert('ERROR ON Tables CREATE local SQLite database'); 
+					// alert(error);
+				},
+				function() { 
+					window.system.showtutorial = true;
+					// alert('SUCCESS Tables CREATE local SQLite database'); 
+					// websqlReady.resolve("initialize done"); 
+				}
+			);
+			this.db.transaction(
+				function(tx) { 
+					tx.executeSql("CREATE TABLE IF NOT EXISTS metbl ( " + "id INTEGER PRIMARY KEY, " + "username VARCHAR(255), " + "password VARCHAR(255), " + "autologin VARCHAR(255))");
+				},
+				function(error) { 
+					alert('ERROR ON Tables CREATE local SQLite database'); 
+					alert(error);
 				},
 				function() { 
 					window.system.showtutorial = true;
@@ -249,7 +256,122 @@ try {
 				}
 			);
 		},
-
+		rememberUserDataDeleteAutologin: function(callback) {
+			// alert('rememberUserDataDeleteAutologin');
+			// alert(window.system.kdnr);
+			var _thisFunction = this;
+			if (isPhoneGap()) {
+				this.db.transaction(
+					function (tx) {
+						var id = window.system.kdnr;
+						// var sql = "DELETE FROM metbl WHERE id=:id";
+						var sql = "UPDATE metbl SET autologin = '0' WHERE id=:id";
+						tx.executeSql(sql, [id], function (tx, results) {
+							callback();
+						});
+					},
+					function (error) {
+						alert('error');
+						alert(error.message);
+						// deferred.reject("Transaction Error: " + error.message);
+						callback();
+					}
+				);
+			}
+			else {
+				callback();
+			}
+		},
+		rememberUserDataDelete: function(callback) {
+			// callback();
+			// alert('rememberUserDataDelete: '+window.system.kdnr);
+			if (isPhoneGap()) {
+				this.db.transaction(
+					function (tx) {
+						var id = window.system.kdnr;
+						// alert(id);
+						// var sql = "DELETE FROM metbl WHERE id=:id";
+						var sql = "DELETE FROM metbl WHERE id=:id";
+						// var sql = "UPDATE metbl SET autologin = '0' WHERE id=:id";
+						// alert(sql);
+						tx.executeSql(sql, [id], function (tx, results) {
+							callback();
+						});
+					},
+					function (error) {
+						// alert('error');
+						// alert(error.message);
+						// deferred.reject("Transaction Error: " + error.message);
+						callback();
+					}
+				);
+			}
+			else {
+				// alert(callback)
+				callback();
+			}
+		},
+		rememberUserDataGet: function(callback) {
+			// var deferred = $.Deferred();
+			var userdata = new Object();
+			userdata.username = "";
+			userdata.password = "";
+			if (isPhoneGap()) {
+				this.db.transaction(
+					function (tx) {
+						var id = window.system.kdnr;
+						// alert(id);
+						var sql = "SELECT m.username, m.password, m.autologin FROM metbl m WHERE m.id=:id";
+						// alert(sql);
+						tx.executeSql(sql, [id], function (tx, results) {
+							// alert('found');
+							// alert(results.username);
+							// alert(results[0].username);
+							// alert('length '+results.rows.length);
+							// alert('results.row... '+results.rows.item(0).username);
+							// deferred.resolve(results.rows.length === 1 ? results.rows.item(0) : null);
+							// alert(results.rows.item(0).username);
+							// alert(results.rows.item(0).password);
+							// alert(results.rows.item(0).autologin);
+							callback(results.rows.item(0));
+						});
+					},
+					function (error) {
+						// alert('error');
+						// alert(error.message);
+						// deferred.reject("Transaction Error: " + error.message);
+						callback(userdata);
+					}
+				);
+			}
+			else {
+				callback(userdata);
+			}
+			// return deferred.promise();
+			// callback();
+		},
+		rememberUserData: function(username, password, autologin) {
+			if (isPhoneGap()) {
+				this.db.transaction(
+					function(tx) {
+						// alert('filling table INSERT START');
+						var sql3 = "INSERT OR REPLACE INTO metbl (id, username, password, autologin) VALUES ("+window.system.kdnr+", '"+username+"', '"+password+"', '"+autologin+"')";
+						// alert(sql3);
+						tx.executeSql(sql3);
+						// alert('filling table INSERT END');
+					},
+					function() {
+						// alert('ERROR ON Table metbl FILLING WITH SAMPLES in local SQLite database');
+					},
+					function() {
+						// alert('Table metbl successfully FILLED WITH SAMPLES in local SQLite database');
+						// callback();
+					}
+				);
+			}
+			// if (!isPhoneGap()) websqlReady.resolve("initialize done");
+		},
+		/*
 		fillTable: function() {
 			// alert('filling table');
 			if (isPhoneGap()) {
@@ -296,7 +418,6 @@ try {
 
 		},
 
-		
 		bbb_sync: function(callback) {
 			var self = this;
 			alert('Starting synchronization...');
@@ -334,7 +455,6 @@ try {
 
 		},
 
-		/*
 		fillTable: function(callback) {
 			this.db.transaction(
 				function(tx) {
@@ -365,7 +485,6 @@ try {
 				}
 			);
 		},
-		*/
 
 		bbb_getLastSync: function(callback) {
 			alert('getLastSync');
@@ -437,6 +556,7 @@ try {
 				}
 			);
 		},
+		*/
 
 		txErrorHandler: function(tx) {
 			alert(tx.message);
@@ -466,6 +586,10 @@ try {
 				break;
 			  case "com.digitalverve.APPinaut.6500APP4999T51":
 				addcredits = "6500";
+				// alert("Gehen Sie auf allen Vieren und werden Sie bescheidener");
+				break;
+			  case "com.digitalverve.APPinaut.16000APP9999T60":
+				addcredits = "16000";
 				// alert("Gehen Sie auf allen Vieren und werden Sie bescheidener");
 				break;
 			  case "com.digitalverve.APPinaut.25000APP17999T72":
@@ -571,6 +695,7 @@ try {
 					"com.digitalverve.APPinaut.250APP359T4", 
 					"com.digitalverve.APPinaut.750APP799T9", 
 					"com.digitalverve.APPinaut.6500APP4999T51", 
+					"com.digitalverve.APPinaut.16000APP9999T60",
 					"com.digitalverve.APPinaut.25000APP17999T72"
 				];
 				window.storekit.load(productIds, function(validProducts, invalidProductIds) {
@@ -646,9 +771,13 @@ try {
 	/ ----------------------------------------------------------- */
 	function modifyiOS7StatusBar(){
 		// if (window.device.version) alert('>> '+window.device.version);
-		var doit = false;
+		var doit = true;
 		if (isPhoneGap() && doit==true) {
-			try{
+			try {
+				StatusBar.hide();
+				document.body.style.marginTop = "0px";
+				$("#body").css('top', "0px");
+				/*
 				if (parseFloat(window.device.version) === 7.0) {
 					// StatusBar.overlaysWebView(false);
 					// StatusBar.styleLightContent();
@@ -667,6 +796,7 @@ try {
 					// document.body.style.marginTop = "20px";
 				}
 				// StatusBar.backgroundColorByHexString("#3e8fd9");
+				*/
 			} catch(e){ 
 				// catchError('modifyiOS7StatusBar()',e); 
 			}
@@ -1458,9 +1588,6 @@ try {
 
 
 
-
-
-
 	/*
 	CAMERA AND VIDEO FUNCTIONS
 	*/
@@ -1584,7 +1711,7 @@ try {
 		// my_media.release();
 		// my_media = null;
 		console.log("Error playbacking media");
-	}	
+	}
 
 	function captureVideoRecord() {
 		var options = { limit: 1, duration: 600, quality: 10 };
@@ -1594,36 +1721,18 @@ try {
 			var newPopoverOptions = new CameraPopoverOptions(0, 0, 100, 100, 0);
 			popoverHandle.setPosition(newPopoverOptions);
 		}
-		// console.log(popoverHandle);
 	}
 
 	function purchaseVideoConfirm(me,videoData) {
 		this._me = me;
 		this._videoData = videoData;
-		// doAlert('Möchten Sie Video uying video ' + videoData.id);
 		if (this._videoData.price>0) doConfirm('Möchten Sie dieses Video für ' + this._videoData.price + ' APPinaut Coins ansehen?', 'Video ansehen', function (event) { 
-			// console.log(event);
-			// console.log(this._me);
-			// purchaseVideoConfirmCallback(event,this._me,this._videoData,this._creditsAfterPurchase); 
 			if (event=="1") {
 				purchaseVideoStart(me,videoData);
 			}
 		}, undefined);
 		else purchaseVideoStart(me,videoData);
 	}
-
-	/*
-	function purchaseVideoConfirmCallback(event,me,videoData,creditsAfterPurchase) {
-		// console.log(this.event);
-		// if (event=="1") doAlert('event=1 (OK)');
-		// if (event=="2") doAlert('event=2 (ABBRECHEN)');
-		if (event=="1") {
-			// console.log(event);
-			purchaseVideoStart(me,videoData,creditsAfterPurchase);
-		}
-		// alert('You clicked confirm...');
-	}
-	*/
 
 	function purchaseVideoStart(me,videoData) {
 		var creditsAfterPurchase = parseFloat(me.credits) - parseFloat(videoData.price);
@@ -1687,6 +1796,7 @@ try {
 				console.log( "Es ist leider ein Fehler passiert, der nicht passieren sollte.", "Entschuldigung..." );
 			})
 			.always(function() {
+				window.me.purchases = _newData.purchases;
 				window._thisViewVideoDetails.render();
 			});
 		}
@@ -1837,88 +1947,6 @@ try {
 			// $('#submitbutton').button('disable');
 		}
 	}
-	/*
-	function attachVideoToPlayer(mediaFilePath) {
-		// var path = mediaFile.fullPath;
-		// var path = mediaFilePath;
-		// console.log('attachVideoToPlayer: '+mediaFilePath);
-		// var video_player = $('#video_player');
-		// if (mediaFilePath==undefined) {
-			// console.log('hide');
-			// $('#videobox').hide();
-			// return(false);
-		// }
-		// else {
-			// $('#camera_file').val(mediaFilePath);
-		// }
-		// if (video_player && mediaFilePath!='') {
-			// var startTime = new Date();
-			// video_player.src = mediaFilePath;
-			// video_player.onloadend = function() {
-				// console.log('Video load time: ' + (new Date() - startTime));
-			// };
-		// }
-		// if (mediaFilePath=='') {
-			// console.log('mediaFilePath empty','DEBUG');
-			// $('#captureVideoUploadButton').button('disable');
-			// $('#submitbutton').button('disable');
-		// }
-	}
-	*/
-	/*
-	function recordVideoUpload(videoRecordLocalStorage) {	
-		console.log(videoRecordLocalStorage);
-		// alert('bla');
-		// return(false);
-		var mediaFile = $('#camera_file').val();
-		log('class captureVideoUpload started');
-		try {
-			// $.mobile.loading( 'show', { theme: 'b', textVisible: true, textonly: true, html: '<div style="text-align:center;">Uploading the awesome...</div>' });
-			showModal();
-			log('uploading '+mediaFile);
-			// log('uploading '+mediaFile.name);
-			var ft = new FileTransfer();
-			ft.onprogress = function(progressEvent) {
-				// $('#uploadstatusbar').html(round((progressEvent.loaded/progressEvent.total)*100)+' %');
-				// $('#uploadstatusbar').html(round((progressEvent.loaded/progressEvent.total)*10000)+' % (' + progressEvent.loaded + ' / ' + progressEvent.total + ')');
-				console.log(progressEvent.loaded + " / " + progressEvent.total);
-				$('#modaltxt').html(progressEvent.loaded+"/"+progressEvent.total);
-			};
-			var options = new FileUploadOptions();
-			options.fileName = new Date().getTime();
-			options.mimeType = "video/mp4";
-			options.chunkedMode = false;
-			ft.upload(mediaFile,
-				// "http://management-consulting.marcel-durchholz.de/secure/upload.php",
-				"http://prelaunch002.appinaut.de/secure/upload.php",
-				function(r) {
-					console.log("Code = " + r.responseCode);
-					console.log("Response = " + r.response);
-					console.log("Sent = " + r.bytesSent);
-					dpd.videos.post({"uploader":""+window.me.id,"videourl":""+options.fileName,"title":""+options.fileName,"description":""+options.fileName,"price":123,"thumbnailurl":""}, function(result, err) {
-						if(err) {
-							return console.log(err);
-						}
-						// $.mobile.loading( 'hide' );
-						hideModal();
-						console.log(result, result.id);
-					});
-				},
-				function(error) {
-					// $.mobile.loading('hide');
-					hideModal();
-					// alert("An error has occurred: Code = " = error.code);
-					log('Error uploading file ' + mediaFile + ': ' + error.code);
-				},
-				options
-			);
-		} catch (e) {
-			// not DATA_URL
-			log('class new FileTransfer not possible');
-		}
-		log('class recordVideoUpload ended');
-	}
-	*/
 
 	// Upload files to server
 	function captureVideoUpload(videoRecordLocalStorage) {
@@ -1961,8 +1989,9 @@ try {
 					// console.log("Code = " + r.responseCode);
 					// console.log("Response = " + r.response);
 					// console.log("Sent = " + r.bytesSent);
-					alert(r.bytesSent);
-					dpd.videos.post({"vsize":Math.ceil(r.bytesSent).toString(),"vlength":window.system.videolength.toString(),"uploader":""+_this._thisViewRecordVideoNested.me.id,"videourl":""+options.fileName,"active":true,"cdate":""+dateYmdHis(),"topic":""+formValues.interest,"title":""+formValues.title,"subtitle":""+formValues.subtitle,"description":""+formValues.description,"price":formValues.sliderprice}, function(result, err) {
+					// alert(r.bytesSent);
+					// dpd.videos.post({"vsize":Math.ceil(r.bytesSent).toString(),"vlength":window.system.videolength.toString(),"uploader":""+_this._thisViewRecordVideoNested.me.id,"videourl":""+options.fileName,"active":true,"cdate":""+dateYmdHis(),"topic":""+formValues.interest,"title":""+formValues.title,"subtitle":""+formValues.subtitle,"description":""+formValues.description,"price":formValues.sliderprice}, function(result, err) {
+					dpd.videos.post({"vsize":Math.ceil(r.bytesSent).toString(),"vlength":window.system.videolength.toString(),"uploader":""+_this._thisViewRecordVideoNested.me.id,"videourl":""+options.fileName,"active":formValues.flipactivate,"cdate":""+dateYmdHis(),"topic":""+formValues.interest,"title":""+formValues.title,"subtitle":""+formValues.subtitle,"description":""+formValues.description,"price":formValues.sliderprice}, function(result, err) {
 						if(err) {
 							hideModal();
 							// doAlert('Es ist ein Fehler passiert, der nicht passieren sollte. Bitte versuchen Sie Ihre Aktion erneut oder wenden Sie sich direkt an das APPinaut Support Team.','Ups! Fehler beim Upload!');
@@ -2199,7 +2228,7 @@ try {
 					{ type: "video/ogg", src: _thisVideoUrl }
 				]);
 			}
-			console.log(myPlayer);
+			// console.log(myPlayer);
 			myPlayer.controlBar.hide();  
 			myPlayer.bigPlayButton.hide();
 			myPlayer.on('timeupdate', function() {
@@ -2208,6 +2237,7 @@ try {
 						myPlayer.posterImage.hide();  
 						myPlayer.currentTime(0);  
 						myPlayer.pause();
+						doAlert('Wenn Sie dieses Video kaufen, können Sie mehr als diese Vorschau sehen.','Sie finden das interesant?');
 					}
 				}
 			});
@@ -2248,6 +2278,7 @@ try {
 				  }
 			);
 		},
+		/*
 		onResume: function() {
 			// alert('app resumed');
 			// dpd.users.me(function(user) {
@@ -2260,6 +2291,7 @@ try {
 			});
 
 		},
+		*/
 		fetchWorking: function() {
 			var setTimeoutWatcher = setTimeout(function foo() {
 				if ( _thisApp.dfd.state() === "pending" ) {
@@ -2277,7 +2309,7 @@ try {
 				window.setTimeout(function blay() {
 					// alert('resolve');
 					_thisApp.dfd.resolve(true);
-				}, 5000);
+				}, 1000);
 			}
 			else {
 				// document.addEventListener('load', this.onDeviceReady, false);
@@ -2320,8 +2352,14 @@ try {
 		}
 	};
 
+	function clearIntervals() {
+		if (window._thisViewCardStart) {
+			_thisViewCardStart.answerCountdownLoopStop();
+			_thisViewCardStart.answerCountdownButtonDelayStop();
+		}
+	}
+	
 	function bindSwipeBack() {
-		// alert('bindSwipeBack');
 		$('#body').off( "swiperight", "#page-content").on( "swiperight", "#page-content", function( e ) {
 			e.preventDefault();
 			// alert('swiped on body');
@@ -2329,6 +2367,7 @@ try {
 			return(false);
 		});
 	}
+	bindSwipeBack();
 
 	window.addEventListener('load', function () {
 		new FastClick(document.body);
@@ -2337,8 +2376,10 @@ try {
 	$(window).bind('hashchange', function(){
 		showModal();
 		modifyiOS7StatusBar();
-		checkTopNaviRoles();
+		checkTopNaviAppConfig();
+		// checkTopNaviRoles();
 		bindSwipeBack();
+		clearIntervals();
 		showDeleteBar(false);
 		$("#flexiblecontent").animate({
 			marginLeft: "0px",
@@ -2348,6 +2389,25 @@ try {
 		});
 	});
 
+	/*
+	$('body').off('click','#captureVideoLinkButton').on('click','#captureVideoLinkButton',function(e) { 
+		e.preventDefault();
+		// $('#linkVideoUrl').val('bla');
+		var videoLink = $('#linkVideoUrl').val();
+		var popupid = 'popupBasic';
+		// var el = $( "#"+popupid );
+		var activepage = $('#popupBasic-popup');
+		var el = activepage.find('#popupBasic');
+		console.log(el);
+		el.popup( "close" );
+		$('#body').find('#popupBasic').each(function() {
+			console.log($(this));
+			$(this).remove();
+		});
+		// $('#popupBasic').remove();
+	});
+	*/
+	
 	$('body').off('click','#closewelcomepopupbtn').on('click','#closewelcomepopupbtn',function(e) { 
 		e.preventDefault();
 		setTimeout(function() {
@@ -2374,7 +2434,68 @@ try {
 		e.preventDefault();
 		// alert('bla');
 		showPageOptions();
-		checkTopNaviRoles();
+		// checkTopNaviRoles();
+		checkTopNaviAppConfig();
+	});
+	
+	$('body').off( "swipeleft", ".swipeToDeleteHover").on( "swipeleft", ".swipeToDeleteHover", function( e ) {
+	// $('body').off( "click", ".swipeToDeleteHover").on( "click", ".swipeToDeleteHover", function( e ) {
+		e.preventDefault();
+		// alert('swiped on element to hover');
+		var delbarid = $(this).attr('data-delbarid');
+		// alert(delbarid);
+		var delbar = $('#'+delbarid);
+		var w = $(window).width()-30-15;
+		delbar.css("width",w+"px"); // .css("z-index","auto");
+		delbar.css("opacity","1.0"); // .css("z-index","auto");
+		$(this).removeClass( 'swipeToDeleteHover' );
+		$(this).addClass( 'swipeToDeleteHoverActive' );
+		// $(this).find('input:text, input:checkbox').each(function() {
+	});
+	$('body').off( "swipeleft", ".swipeToDeleteHover").on( "swipeleft", ".swipeToDeleteHover", function( e ) {
+	// $('body').off( "click", ".swipeToDeleteHoverActive").on( "click", ".swipeToDeleteHoverActive", function( e ) {
+		e.preventDefault();
+		// alert('swiped on element to hover deactivate');
+		var delbarid = $(this).attr('data-delbarid');
+		// alert(delbarid);
+		var delbar = $('#'+delbarid);
+		delbar.css("width","45px"); // .css("z-index","auto");
+		delbar.css("opacity","0.5"); // .css("z-index","auto");
+		$(this).removeClass( 'swipeToDeleteHoverActive' );
+		$(this).addClass( 'swipeToDeleteHover' );
+	});
+	
+	$('body').off( "click", ".navigateButton").on( "click", ".navigateButton", function( e ) {
+		e.preventDefault();
+		var href = $(this).attr('href');
+		// alert(cardpageid);
+		window.location.href = href;
+		return(false);
+		// window.location.href = e.currentTarget.hash;
+	});
+	
+	$('body').off( "click", ".showDelBarBtn").on( "click", ".showDelBarBtn", function( e ) {
+		e.preventDefault();
+		// alert('swiped on element to hover activate');
+		var delbarid = $(this).attr('data-delbarid');
+		// alert(delbarid);
+		var delbar = $('#'+delbarid);
+		var w = $(window).width()-30-15;
+		delbar.css("width",w+"px"); // .css("z-index","auto");
+		delbar.css("opacity","1.0"); // .css("z-index","auto");
+		$(this).removeClass( 'showDelBarBtn' );
+		$(this).addClass( 'hideDelBarBtn' );
+	});
+	$('body').off( "click", ".hideDelBarBtn").on( "click", ".hideDelBarBtn", function( e ) {
+		e.preventDefault();
+		// alert('swiped on element to hover deactivate');
+		var delbarid = $(this).attr('data-delbarid');
+		// alert(delbarid);
+		var delbar = $('#'+delbarid);
+		delbar.css("width","45px"); // .css("z-index","auto");
+		delbar.css("opacity","0.5"); // .css("z-index","auto");
+		$(this).removeClass( 'hideDelBarBtn' );
+		$(this).addClass( 'showDelBarBtn' );
 	});
 	
 	
@@ -2383,10 +2504,10 @@ try {
 		e.preventDefault();
 		// alert('swiped on element');
 		var listitem = $(this);
-		deleteMessageSwitch(listitem);
+		deleteElementSwitch(listitem);
 	});
 	
-	function deleteMessageSwitch(el) {
+	function deleteElementSwitch(el) {
 		var listitem = el;
 		el.toggleClass( 'ui-btn-up-d' );
 		var selected = 0;
@@ -2404,9 +2525,9 @@ try {
 		// alert('swiped on element');
 		doConfirm('Der Eintrag kann nicht wiederhergestellt werden!', 'Wirklich löschen?', function (clickevent) { 
 			if (clickevent=="1") {
-				$.when( deleteMessageFlow() ).done(
+				$.when( deleteFlowClicked() ).done(
 					function( result ) {
-						console.log('end deleteMessageFlow');
+						// console.log('end deleteFlowClicked');
 					}
 				);
 			}
@@ -2420,69 +2541,66 @@ try {
 		var listitem = $(this);
 		doConfirm('Der Eintrag kann nicht wiederhergestellt werden!', 'Wirklich löschen?', function (clickevent) { 
 			if (clickevent=="1") {
-				deleteMessageFlow(listitem);
+				deleteFlowClicked(listitem);
 			}
 		}, "Ja,Nein");
 	});
 	*/
 	
-	function deleteMessageFlow() {
-		// alert('deleteMessageFlow');
-		// alert('deleteMessageFlow');
-		showModal();
-		var deferred = $.Deferred();
-		var count = 0;
-		$('.swipeToDelete').each(function () {
-			// aaa
-			// console.log($(this).attr('class'));
-			var this_id = $(this).attr('data-id');
-			$(this).remove();
-			var this_cat = $(this).attr('data-cat');
-			if ($(this).hasClass( "ui-btn-up-d" )) {
-				// selected = selected + 1;
-				// console.log('deleting flow id: '+this_id);
-				dpd.messages.get(this_id, function (result) {
-					// console.log(result);
-					var query = { $or:[{"sender":result.receiver,"receiver":result.sender}  ,  {"sender":result.sender,"receiver":result.receiver}] };
-					dpd.messages.get(query, function (messages) {
-						// console.log();
-						// $.each( messages, function( key, message ) {
-						for(key = 0; key < messages.length; key++) {
-							var message = messages[key];
-							// console.log(key);
-							// console.log(message);
-							dpd.messages.del(message.id, function (err) {
-								count++;
-								if(err) {
-									if (count==messages.length) deleteMessageFlowDone();
-								}
-								else {
-									if (count==messages.length) deleteMessageFlowDone();
-								}
-							});
-						}
-						// $('#MessagesNestedViewDiv').html('');
-						// window._thisMessagesViewNested.fetch();
-					});
-				});
-			}
-		});
-		// deferred.resolve(count);
-		// window._thisMessagesViewNested.fetch();
-		// return deferred.promise();
-		// alert(this_id);
+	function deleteFlowClicked() {
+		deleteMessageFlow();
 	}
 	
-	function deleteMessageFlowDone() {
+	function deleteMessageFlow() {
+		showModal();
+		var count = 0;
+		// console.log($('.swipeToDelete').find('li .ui-btn-up-d'));
+		$('.swipeToDelete').each(function () {
+			var this_cat = $(this).attr('data-cat');
+			if ($(this).hasClass( "ui-btn-up-d" )) {
+				$(this).remove();
+				if (this_cat=='messages') {
+					var this_id = $(this).attr('data-id');
+					dpd.messages.get(this_id, function (result) {
+						var query = { $or:[{"sender":result.receiver,"receiver":result.sender}  ,  {"sender":result.sender,"receiver":result.receiver}] };
+						dpd.messages.get(query, function (messages) {
+							for(key = 0; key < messages.length; key++) {
+								var message = messages[key];
+								dpd.messages.put(message.id, {"deleted":true}, function(result, err) {
+									count++;
+									if (count==messages.length) {
+										window._thisMessagesViewNested.fetch();
+										deleteFlowDone();
+									}
+								});
+							}
+						});
+					});
+				}
+				if (this_cat=='cardpages') {
+					var this_id = $(this).attr('data-cardpageid');
+					// console.log(this_id);
+					dpd.cardpages.put(this_id, {"deleted":true}, function(result, err) {
+						if(err) {
+							return console.log(err);
+							hideModal();
+						}
+						// console.log(result);
+						hideModal();
+					});
+					window._thisViewCardEditNested.initialize();
+					deleteFlowDone();
+				}
+			}
+		});
+	}
+	
+	function deleteFlowDone() {
 		console.log('done');
 		hideModal();
-		window._thisMessagesViewNested.fetch();
 		showDeleteBar(false);
 	}
 	
-	
-	
-	bindSwipeBack();
 	$('body').off( "click", ".messagesendbutton").on( "click", ".messagesendbutton", function( e ) {
 		e.preventDefault();
 		// alert('bla');
@@ -2561,6 +2679,26 @@ try {
 		}
 	}
 	
+	$('#body').off('change','.activecb').on('change','.activecb',function(e) { 
+		e.preventDefault();
+		var id = $(this).attr('data-id');
+		// alert(id);
+		var status = e.currentTarget.checked;
+		var dbtype = $(this).attr('data-dbtype');
+		if (dbtype=="video") dpd.videos.put(id, {"active":status});
+		else if (dbtype=="card") dpd.cards.put(id, {"active":status});
+		return(false);
+	});
+	
+	$('#body').off('change','.publiccb').on('change','.publiccb',function(e) { 
+		e.preventDefault();
+		var id = $(this).attr('data-id');
+		var status = e.currentTarget.checked;
+		var dbtype = $(this).attr('data-dbtype');
+		if (dbtype=="video") dpd.videos.put(id, {"public":status});
+		else if (dbtype=="card") dpd.cards.put(id, {"public":status});
+		return(false);
+	});
 	
 	$('#body').off( "keyup", "#messagetextarea").on( "keyup", "#messagetextarea", function( e ) {
 		/*
@@ -2637,23 +2775,16 @@ try {
 	
 	 
 	function checkTopNaviRoles() {
-		// alert('foo');
-		// dpd.users.me(function(me) {
 		 try {
 			$( "#pageOptions li" ).each(function(index, value) {
 				var lirole = $(this).attr('data-roles');
-				// console.log(value);
-				// console.log(lirole);
-				// console.log(checkRole(lirole));
-				if (lirole == '' || lirole == 'public' || lirole == undefined) { 
+				// if (lirole == '' || lirole == 'public' || lirole == undefined) { 
+				if (lirole == 'public') { 
 					$(this).css('visibility','visible');
 					$(this).css('display','block');
 				}
 				else {
 					if (lirole != undefined) {
-						//  && checkRole(lirole)==true
-						// var bla = checkRole(lirole);
-						// alert(bla);
 						if (checkRole(lirole)==true) {
 							$(this).css('visibility','visible');
 							$(this).css('display','block');
@@ -2665,28 +2796,99 @@ try {
 					}
 				}
 			});
-		// });
 		} catch (e) {
-			// alert(e);
-			// $( "#showPageOptions" ).hide();
 		}
+	}
 
+	function checkTopNaviAppConfig() {
+		 try {
+			// alert('checkTopNaviAppConfig');
+			$( "#pageOptions li" ).each(function(index, value) {
+				var liconfig = $(this).attr('data-appconfig');
+				// console.log('is '+liconfig+' enabled: '+checkAppConfig(liconfig));
+				if (checkAppConfig(liconfig)==true) {
+				// if (liconfig == '' || liconfig == 'public' || liconfig == undefined) { 
+					var lirole = $(this).attr('data-role');
+					// console.log('do i have access to '+lirole+': '+checkRole(lirole));
+					if (checkRole(lirole)) {
+						$(this).css('visibility','visible');
+						$(this).css('display','block');
+					}
+					else {
+						$(this).css('visibility','hidden');
+						$(this).css('display','none');
+					}
+				}
+				else {
+					$(this).css('visibility','hidden');
+					$(this).css('display','none');
+				}
+				
+			});
+		} catch (e) {
+		}
 	}
 
 	function checkRole(role) {
 		var show = false;
-		$.each( window.me.roles, function( key, value ) {
-			if (role==value) {
+		// if ($.inArray('user', window.me.roles) > -1) show = true;
+		// if (role=='provider' || role=='seeker') show = true;
+		// else 
+		// else 
+		if (role=='' || role==undefined) show = true;
+		else if (window.me.roles!=undefined) {
+			$.each( window.me.roles, function( key, value ) {
+				if (role==value) {
+					show = true;
+					return(show);
+				}
+			});
+		}
+		return(show);
+	}
+	function checkRoles(smroles) {
+		var show = false;
+		$.each( smroles, function( keysm, rolesm ) {
+			if (checkRole(rolesm)==true) {
 				show = true;
 				return(show);
-			}
-			else {
-				// show = false;
 			}
 		});
 		return(show);
 	}
-
+	
+	function checkAppConfig(role) {
+		var show = false;
+		// console.log(role);
+		// if (role=='') alert('empty'); // show = true;
+		// else alert(role);
+		if (role=='') show = true;
+		else if (role=='user') show = true;
+		else if (window.system.owner.appviews!=undefined) {
+			// console.log(window.system.owner.appviews);
+			$.each( window.system.owner.appviews, function( key, value ) {
+				if (role==value) {
+					// console.log(role+' ?= '+value);
+					show = true;
+					return(show);
+				}
+			});
+		}
+		return(show);
+	}
+	function checkAppConfigs(roles) {
+		var show = false;
+		if (window.system.owner.appviews!=undefined) {
+			$.each( roles, function( key, role ) {
+				if (checkAppConfig(role)==true) {
+					show = true;
+					return(show);
+				}
+			});
+		}
+		return(show);
+	}
+	
 	$('#footervideolink').on("vclick", function (e) {
 		// report('footer clicked');
 		if (footervideoStatus != true) {
@@ -2769,7 +2971,7 @@ try {
 	function showModal() {
 		// if ($('.modalWindow')) return(false);
 		// console.log('showModal');
-		window.system.modaltimeout = 5000;
+		window.system.modaltimeout = 15000;
 		window.clearInterval(window.modaltimeoutvar);
 		window.modaltimeoutvar = window.setInterval(function() {
 			// console.log(window.system.modaltimeout);
@@ -2779,7 +2981,7 @@ try {
 				$('#breaktoDashboard').html(breaktoDashboardText);
 				$('#breaktoDashboard').show();
 				window.clearInterval(window.modaltimeoutvar);
-				window.system.modaltimeout = 5000;
+				window.system.modaltimeout = 15000;
 			}
 		},1000);
 		$("#body").append('<div class="modalWindow"/>');
@@ -2804,9 +3006,14 @@ try {
 		$.mobile.loading( 'hide' );
 	}
 
-	var system = {
-		uid: "0",
-		aoid: "4de562f2efa778ab",
+	window.system = {
+		master: window.master,
+		kdnr: window.kdnr,
+		owner: new Object(),
+		appoptions: new Array(),
+		me: new Object(),
+		aoid: window.aoid,
+		uid: window.uid,
 		showtutorial: false,
 		contentHelper: 0,
 		timestamp: 0,
@@ -2835,6 +3042,50 @@ try {
 			}
 		}
 	}
+	
+	
+	function getOwnerData() {
+		// get owner data and roles
+		$.ajax('http://dominik-lohmann.de:5000/users/?kdnr='+window.system.kdnr,{
+			type:"GET",
+			async: false,
+		}).done(function(result) {
+			var owner = result[0];
+			window.system.app = {title:owner.slogan, calltoaction:"Registrieren oder Einloggen um zu entdecken"};
+			window.system.owner = owner;
+			window.system.aoid = owner.id;
+			window.system.master = owner.master;
+		});
+	}
+	getOwnerData();
+
+	function getAppOptions() {
+		// get app data and roles
+		$.ajax('http://dominik-lohmann.de:5000/appoptions/',{
+			type:"GET",
+			async: false,
+		}).done(function(result) {
+			window.system.appoptions = result[0];
+		});
+	}
+	getAppOptions();
+
+	/*
+	function checkLogin() {
+		// get owner data and roles
+		$.ajax('http://dominik-lohmann.de:5000/users/?kdnr='+window.system.kdnr,{
+			type:"GET",
+			async: false,
+		}).done(function(result) {
+			var owner = result[0];
+			window.system.app = {title:owner.slogan, calltoaction:"Registrieren oder Einloggen um zu entdecken"};
+			window.system.owner = owner;
+			window.system.aoid = owner.id;
+			window.system.master = owner.master;
+		});
+	}
+	*/
+
 	// alert(system.contentHelper);
 
 	function checkEmail(email){
@@ -2906,9 +3157,11 @@ try {
 		// var s = date.getSeconds();
 		// var i = date.getMinutes();
 		// var H = date.getHours();
-		var d = date.substr(6,2);
-		var m = date.substr(4,2);
-		var y = date.substr(0,4);
+		// var d = date.substr(6,2);
+		if (date==undefined) date = "??????????????";
+		var d = (undefined ? "" : date.substr(6,2));
+		var m = (undefined ? "" : date.substr(4,2));
+		var y = (undefined ? "" : date.substr(0,4));
 		// var val = '' + y + '' + (m<=9 ? '0' + m : m) + '' + (d <= 9 ? '0' + d : d) + '' + (H<=9 ? '0' + H : H)  + '' + (i<=9 ? '0' + i : i)  + '' + (s<=9 ? '0' + s : s);
 		var val = '' + d + '.' + m + '.' + y;
 		return(val);
@@ -2964,7 +3217,7 @@ try {
 		var height = $(window).height();
 		var width = $(window).width();
 		
-		var font = 13;
+		var font = 10;
 		//Get window width
 
 		//Set new font size
@@ -2975,10 +3228,9 @@ try {
 		// 150000
 		var factor = (fullpixel/180000);
 		// alert(factor);
-		if (factor<1) factor = 1;
-		if (factor>1.2) factor = 1.2;
+		if (factor<0.8) factor = 0.8;
+		if (factor>1.4) factor = 1.4;
 		var newFont = font * factor;
-		if (newFont<12) newFont = 12;
 		/*
 		$('#body').each(function( index ) {
 			// alert($(this).css('font-size').substr($( this ).css('font-size').len-2,2));
@@ -2993,7 +3245,8 @@ try {
 			// alert($(this).html());
 			var font = $(this).css('font-size').substr($( this ).css('font-size').len-2,2);
 			newFont = font*factor;
-			if (newFont>20) newFont = 20;
+			if (newFont<12) newFont = 12;
+			if (newFont>24) newFont = 24;
 			// alert(newFont);
 			$(this).css("font-size", newFont+"px");
 		});
@@ -3029,7 +3282,18 @@ try {
 		alert('code: '    + error.code    + '\n' +
 			  'message: ' + error.message + '\n');
 	}
-
+	
+	function scrollBottom() {
+		// $('#page-content').stop().animate({
+		setTimeout(function() {
+			$('#page-content').animate({
+				scrollTop: $("#page-content")[0].scrollHeight
+			}, "fast", function() {
+				// animation done
+				$('#page-content').focus();
+			});
+		}, 1000);
+	}
 
 	var showDeleteBar = function(status) {
 		var deleteBarDeferred = $.Deferred();
@@ -3050,18 +3314,6 @@ try {
 			// console.log(value);
 		});
 	};
-
-	function scrollBottom() {
-		// $('#page-content').stop().animate({
-		setTimeout(function() {
-			$('#page-content').animate({
-				scrollTop: $("#page-content")[0].scrollHeight
-			}, "fast", function() {
-				// animation done
-				$('#page-content').focus();
-			});
-		}, 1000);
-	}
 
 } catch (e) {
 	console.log('error in js script');

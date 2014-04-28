@@ -1,0 +1,89 @@
+<h3 class="ui-bar ui-bar-f" style="border-top-width:0px;text-align:center;"><%= card.title %></h3>
+
+<div style="margin-bottom:50px;padding:15px;width;100%;">
+
+	<h6 style="font-size:24px;" class="resizetext"><%= card.title %></h6>
+	
+	<form id="submitform" action="#cards/start/view/<%= card.cardid %>/<%= card.nextpage %>" method="post" class="no-ui-body no-ui-body-a no-ui-corner-all" style="border:0;">
+		
+		<input type="hidden" id="id" name="id" value="<%= card.id %>">
+		<input type="hidden" id="page" name="page" value="<%= card.page %>">
+		
+		<!--
+		<p><div style="font-size:16px;" class="resizetext"><%= card.title %></div></p>
+		-->
+		<% if (card.failures==0) { %>
+			<p>
+				<div style="font-size:14px;padding-top:10px;padding-bottom:0px;font-weight:bold;" class="resizetext">
+					Herzlichen Glückwunsch. <br>
+					Das war absolut fehlerfrei.
+				</div>
+			</p>
+		<% } else { %>
+			<p>
+				<div style="color:red;font-size:14px;font-weight:bold;" class="resizetext">Sie haben <%= card.failures %> Fehler gemacht.</div>
+			</p>
+		<% } %>
+			
+		<!--
+		<p>
+			<strong>Statistik zu diesem Lernset</strong>
+		</p>
+		-->
+		<p>
+			<!--
+			<div><%= card.dbObject.completed %> Nutzer haben dieses Lernset absolviert.</div>
+			<div class="clear"></div>
+			-->
+			<div style="width:100%;">
+				<img style="width:100%;" src="http://chart.apis.google.com/chart?chs=500x500&chd=t:<%= card.dbObject.correct %>,<%= card.dbObject.wrong %>&cht=p&chco=629632,CD0000&chf=bg,s,65432100">
+			</div>
+			<div style="font-size:12px;" class="resizetext"><!--<%= card.dbObject.correct %>--><%= (Math.round(card.dbObject.correct/card.dbObject.completed*100,0)/100)*100 %> % schafften dieses Lernset fehlerfrei.</div>
+			<div class="clear"></div>
+			<div style="font-size:12px;" class="resizetext"><!--<%= card.dbObject.wrong %>--><%= (Math.round(card.dbObject.wrong/card.dbObject.completed*100,0)/100)*100 %> % hatten Fehler in den Anworten.</div>
+			<div class="clear"></div>
+		</p>
+			
+		<% if (card.failures>0) { %>
+			<div id="showDetailsBtnArea" name="showDetailsBtnArea">
+				<input id="showDetailsBtn" name="showDetailsBtn" data-theme="f" type="button" value="Lösungen anzeigen" />
+			</div>
+		<% } %>
+		
+		<div id="detailsArea" name="detailsArea" style="display:none;">
+			<hr>
+			<% _.each(card.resultArray, function(resultElement) { %>
+				<p style="font-size:14px;font-weight:bold;" class="resizetext">
+					<% if (resultElement.lastquestion!=resultElement.question) { %> 
+						<p style="font-size:16px;padding-top:20px;" class="resizetext"><strong><%= resultElement.question %></strong></p>
+					<% } %>
+					<div style="font-size:14px;" class="resizetext"><%= resultElement.answer %> </div> <br>
+					<% if (resultElement.solution==0) { %>
+						<div style="color:red;font-size:14px;" class="resizetext">Diese Antwort ist leider falsch.</div> <br>
+					<% } else { %>
+						<div style="color:red;font-size:14px;" class="resizetext">Diese Antwort wäre wäre richtig gewesen.</div> <br>
+					<% } %>
+				</p>			
+			<% }); %>
+			<hr>
+			<div class="clear" style="height:20px;"></div>
+		</div>
+
+		
+		<!--
+		<p>
+			<div data-role="controlgroup" style="border:0;">
+				
+			</div>
+		</p>
+		-->
+		
+		<% if (card.resultArray.length>0) { %>
+			<input id="retrycard" name="retrycard" data-theme="d" type="button" value="Nochmal versuchen" />
+		<% } else { %>
+			<input id="cardslink" name="cardslink" data-theme="f" type="button" value="Neues Lernset starten" />
+		<% } %>
+		
+	</form>
+	
+</div>

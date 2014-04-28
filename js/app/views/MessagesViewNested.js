@@ -22,7 +22,7 @@ define(["jquery", "backbone", "text!templates/MessagesViewNestedPage.html"],
 					if (me) {
 						// console.log(me.id);
 						// http://dominik-lohmann.de:5000/messages?{"$or":[{"sender":"009505631619d88e"},{"receiver":"009505631619d88e"}],$sort:{cdate:-1}}
-						var query = {$or:[{"sender":me.id},{"receiver":me.id}],$sort:{cdate:1}};
+						var query = {$or:[{"sender":me.id},{"receiver":me.id}],"deleted":false,$sort:{cdate:1}};
 						// var query = {$or:[{"sender":me.id},{"receiver":me.id}]};
 						dpd.messages.get(query, function (allmessagesdata) {
 							_thisMessagesViewNested.messages = new Array;
@@ -32,8 +32,11 @@ define(["jquery", "backbone", "text!templates/MessagesViewNestedPage.html"],
 								else if ($.inArray(me.id, message.readby)<0) message.unread += 1;
 								_thisMessagesViewNested.messages.push(message);
 							});							
-							
 							_thisMessagesViewNested.messages.reverse();
+							
+							if (_thisMessagesViewNested.messages.length==0) {
+								// alert('yet no messages');
+							}
 							
 							var displayedGroups = new Array();
 							$.each(_thisMessagesViewNested.messages,function(key4,message) {
@@ -89,8 +92,8 @@ define(["jquery", "backbone", "text!templates/MessagesViewNestedPage.html"],
 						});
 					}
 					else {
-						console.log('You are not logged in!');
-						window.location.href = "#noaccess";
+						// console.log('Redirecting... You are not logged in!');
+						window.location.href = "#login";
 					}
 				});
 			},

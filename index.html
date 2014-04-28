@@ -14,7 +14,15 @@
 		<meta http-equiv="cache-control" content="no-cache"/>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
 		
+		<script type="text/javascript">
+			window.onerror = function(message, url, lineNumber) {
+				console.log("Error: "+message+" in "+url+" at line "+lineNumber);
+			}
+		</script>
+		
 		<!-- <script src="http://debug.build.phonegap.com/target/target-script-min.js#appinaut633241"></script> -->
+		<script type="text/javascript" src="provider.js"></script>
+		
 		<script type="text/javascript" src="cordova-loader.js"></script>
 		<script src="js/detectmobile.js"></script>
 		<script type="application/javascript" src="js/libs/fastclick.js"></script>
@@ -30,7 +38,7 @@
 	</head>
 
 	<body id="body" style="display:hidden;">
-		<div style="position:fixed;">
+		<div style="position:fixed;" id="pageoverlay">
 			<div data-role="popup" id="welcomepopup" name="welcomepopup" data-overlay-theme="a" class="ui-corner-all" style="text-align:center;z-index:9999;">
 				<a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="arrow-r" data-iconpos="notext" class="ui-btn-right"></a>
 				<div data-role="content" class="ui-corner-bottom ui-content">
@@ -71,7 +79,7 @@
 				<div style="text-align:center;">
 					<img style="max-height:46px;max-width:100%;" alt="APPinaut" src="images/logo.png">
 				</div>
-				<div id="showMenu" style="float:left;clear:none;display:inline-block;position:absolute;top:0px;left:0px;border:0px;padding:4px;margin:0px;">
+				<div id="showMenu" style="float:left;clear:none;display:inline-block;position:absolute;top:0px;left:0px;border:0px;padding:4px;margin:0px;cursor:pointer;">
 					<img id="showMenuIconDeg" border="0" alt="Menu" src="images/icon-menu.png">
 				</div>
 				<div style="float:right;clear:none;display:inline-block;position:absolute;top:0px;right:0px;border:0px;padding:4px;margin:0px;">
@@ -84,15 +92,15 @@
 			</div>
 			<div id="pageOptions" class="pageOptions" style="width:100%;height:auto;display:none;">
 				<ul data-role="listview">
-					<li style="display:none;" data-roles="seeker" 		data-mini="true" data-iconpos="left" data-icon="grid"><a style="font-weight:normal;" href="#dashboard">Dashboard</a></li>
-					<li style="display:none;" data-roles="seeker"		data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#messages/details/view/0">Nachricht senden</a></li>
-					<li style="display:none;" data-roles="provider" 	data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#videos/record">Multimediadatei hinzufügen</a></li>
+					<li style="display:none;" data-appconfig="" 			data-role="seeker" 		data-mini="true" data-iconpos="left" data-icon="grid"><a style="font-weight:normal;" href="#dashboard">Dashboard</a></li>
+					<li style="display:none;" data-appconfig="messages"		data-role="seeker" 		data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#messages/details/view/0">Neue Mitteilung senden</a></li>
+					<li style="display:none;" data-appconfig="videos" 		data-role="provider" 	data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#videos/record">Multimediadatei hinzufügen</a></li>
+					<li style="display:none;" data-appconfig="cards" 		data-role="provider" 	data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#cards/edit">Lernset bearbeiten/hinzufügen</a></li>
 					<!--
-					<li style="display:none;" data-roles="niemand" 		data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#cards/edit/">Lernset/Lernkarte hinzufügen</a></li>
 					<li style="display:none;" data-roles="niemand" 		data-mini="true" data-iconpos="left" data-icon="plus"><a style="font-weight:normal;" href="#planer/edit/">Veranstaltung/Termin hinzufügen</a></li>
 					<li style="display:none;" data-roles="superadmin"	data-mini="true" data-iconpos="left" data-icon="bars"><a style="font-weight:normal;" href="#admin/users">Benutzerverwaltung</a></li>
 					-->
-					<li style="display:none;" data-roles="seeker" 		data-mini="true" data-iconpos="left" data-icon="arrow-l"><a style="font-weight:normal;" onClick="javascript:rotatePageOptionsIcon();history.back();return(false);">Zurück</a></li>
+					<li style="display:none;" data-appconfig="" 		data-role="user" 		data-mini="true" data-iconpos="left" data-icon="arrow-l"><a style="font-weight:normal;" onClick="javascript:rotatePageOptionsIcon();history.back();return(false);">Zurück</a></li>
 				</ul>
 			</div>
 			

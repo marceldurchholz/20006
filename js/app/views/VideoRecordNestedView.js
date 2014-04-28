@@ -1,8 +1,8 @@
 // VideoRecordNestedView.js
 // -------
-define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordCollection", "text!templates/VideoRecordNestedPage.html", "text!templates/VideoRecordNestedPageTwo.html", "text!templates/sidemenusList.html", "views/SidemenuView"],
+define(["jquery", "backbone", "text!templates/captureVideoLinkPage.html", "models/VideoModel", "collections/videoRecordCollection", "text!templates/VideoRecordNestedPage.html", "text!templates/VideoRecordNestedPageTwo.html", "text!templates/sidemenusList.html", "views/SidemenuView"],
 
-    function($, Backbone, VideoModel, videoRecordCollection, VideoRecordNestedPage, VideoRecordNestedPageTwo, sidemenusList, SidemenuView){
+    function($, Backbone, captureVideoLinkPage, VideoModel, videoRecordCollection, VideoRecordNestedPage, VideoRecordNestedPageTwo, sidemenusList, SidemenuView){
 		
 		var VideoRecordNestedViewVar = Backbone.View.extend({
 			
@@ -20,6 +20,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				_thisViewRecordVideoNested.localStorageSubmitform.set(_thisViewRecordVideoNested.localStorageSubmitformModel);
 				this.activePage = VideoRecordNestedPage;
 			},
+			/*
 			initializeme: function() {
 				console.log('initializing ME in VideoRecordNestedView.js');
 				$(this.el).html('loading...');
@@ -37,6 +38,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				  }
 				);
 			},
+			*/
 			fetchWorking: function() {
 				var setTimeoutWatcher = setTimeout(function foo() {
 					if ( _thisViewRecordVideoNested.dfd.state() === "pending" ) {
@@ -68,7 +70,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				_thisViewRecordVideoNested = this;
 				console.log('fetching VideoRecordNestedView.js');
 				this.$el.hide();
-				_thisViewRecordVideoNested.initializeme();
+				// _thisViewRecordVideoNested.initializeme();
 				$.ajax({
 					url: "http://dominik-lohmann.de:5000/interests",
 					async: false
@@ -83,6 +85,19 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 					  return 1
 					 return 0 //default return value (no sorting)
 				});
+				
+				dpd('users').get(window.system.uid, function(me, err) { 
+					if (me) {
+						window.me = me;
+						_thisViewRecordVideoNested.me = me;
+						_thisViewRecordVideoNested.render();
+					}
+					else {
+						// console.log('Redirecting... You are not logged in!');
+						window.location.href = "#login";				
+					}
+				});
+				
 				// console.log(_thisViewRecordVideoNested.interests);
 			},
 			switchPage: function() {
@@ -96,8 +111,11 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				// return(false);
 				var videosrc = $("#video_player").attr("src");
 				if (videosrc==undefined || videosrc=='') {
-					doAlert('Bitte nehmen es eines auf auf oder verknüpfen Sie ein existierendes Video.','Und das Video?');
-					return(false);
+					// if (!isMobile.any()) videosrc = 'https://dl.dropboxusercontent.com/u/45253363/appinaut/videos/1111111111.mp4';
+					// else {
+						doAlert('Bitte nehmen es eines auf auf oder verknüpfen Sie ein existierendes Video.','Und das Video?');
+						return(false);
+					// }
 				}
 				_thisViewRecordVideoNested.formValues = new Object;
 				_.each(this.$('#submitform').serializeArray(), function(input){
@@ -133,7 +151,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				_.each(this.$('#submitform').serializeArray(), function(input){
 					if (input.value=='') {
 						doAlert('Es fehlen Angaben in mindestens einem Formularfeld.','Formular unvollständig!');
-						// console.log(input);
+						console.log(input);
 						_thisViewRecordVideoNested.stop=true;
 						// return(false);
 					}
@@ -145,12 +163,79 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				// this.activePage = VideoRecordNestedPageTwo;
 				// this.render();
 				console.log(_thisViewRecordVideoNested.localStorageSubmitform);
+				
 				// return(false);
-				captureVideoUpload(_thisViewRecordVideoNested.localStorageSubmitform);
+				if (isMobile.any()) captureVideoUpload(_thisViewRecordVideoNested.localStorageSubmitform);
+				else {
+					var attributes = _thisViewRecordVideoNested.localStorageSubmitform.models[0].attributes;
+					console.log(attributes);
+					if (attributes.flipactivate=="on") var isactive = true; else var isactive = false;
+					dpd.videos.post({"external":true,"vsize":"","vlength":"","uploader":""+_thisViewRecordVideoNested.me.id,"videourl":""+attributes.camera_file,"active":isactive,"cdate":""+dateYmdHis(),"topic":""+attributes.interest,"title":""+attributes.title,"subtitle":"","description":""+attributes.description,"price":attributes.sliderprice}, function(result, err) {
+						if(err) {
+							hideModal();
+							return console.log(err);
+						}
+						hideModal();
+						window.location.href = '#learningstreamview';
+					});
+				}
 			},
 			bindEvents: function() {
 				var _thisViewRecordVideoNested = this;
 				$('#body').off( "swiperight", "#page-content");
+				
+				_thisViewRecordVideoNested.$el.off('click','#captureVideoLinkPopup').on('click','#captureVideoLinkPopup',function(e){
+					e.preventDefault();
+					var popupid = 'popupBasic';
+					$('#pageoverlay').append('<div style="z-index:9999;width:'+($(window).width()-30)+'px;min-width:200px !important;max-width:650px !important;" data-role="popup" data-dismissible="true" data-overlay-theme="a" class="ui-corner-all" data-theme="b" id="'+popupid+'"></div>');
+					$('#'+popupid).html('<a href="#" data-rel="back" data-role="button" data-theme="a" data-icon="delete" data-iconpos="notext" class="ui-btn-right"></a>');			
+					$('#'+popupid).append('<div class="ui-corner-bottom ui-content" id="popupcontent" data-role="content"></div>');
+					$( "#"+popupid ).bind({
+						popupafterclose: function(event, ui) { 
+							var videoLink = $('#linkVideoUrl').val();
+							// var videoLink = "http://download.wavetlan.com/SVV/Media/HTTP/H264/Talkinghead_Media/H264_test1_Talkinghead_mp4_480x360.mp4";
+							if (videoLink!='') {
+								var video_player = $('#video_player');
+								video_player.attr("src", videoLink).get(0).pause();
+								$('#camera_file').val(videoLink);
+							}
+							$('#body').find('.ui-popup-container').each(function() {
+								$(this).remove();
+							});
+						}
+					});
+					var popupcontent = _.template(captureVideoLinkPage, {
+						data: _thisViewRecordVideoNested.me
+					},{variable:'user'});
+					$('#popupcontent').html(popupcontent);
+					var el = $( "#"+popupid );
+					el.popup().trigger('create');
+					el.popup( "open", {transition: 'fade'} );
+				});
+				
+				this.$el.off('change','#sliderprice').on('change','#sliderprice',function(event){
+					$('#priceincoins').html($('#sliderprice').val());					
+					var priceineuro = ((Math.ceil($('#sliderprice').val()*0.0055*100))/100).toString().replace(".", ",");
+					if (priceineuro.split(",")[1]==undefined) priceineuro = priceineuro + ",00";
+					else if (priceineuro.split(",")[1].length==0) priceineuro = priceineuro + "00";
+					else if (priceineuro.split(",")[1].length==1) priceineuro = priceineuro + "0";
+					$('#priceineuro').html(priceineuro);
+				});
+				
+				/*
+				$('#slider').val('on');
+				try {
+					$('#slider').slider("refresh");
+				}
+				catch (err) {
+					console.log ("Error occurred refreshing slider (probabily first time!)");
+				}
+				*/
+				
+				// $('#sliderprice').css({"visibility":"hidden","width":"0","display":"none"});
+				// $( ".ui-slider" ).css( {"width":"90% !important"} );
+				// $( "input.ui-slider-input" ).css( {"display":"none !important"} );
+				
 				/*
 				this.$el.off('click','#checkLocalTitleButton').on('click','#checkLocalTitleButton',function(event){
 					event.preventDefault();
@@ -163,8 +248,16 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				});
 				this.$el.off('click','#recordMediaUploadButton').on('click','#recordMediaUploadButton',function(event){
 					event.preventDefault();
+					/*
+					if (!isMobile.any()) {
+						doAlert('Die Uploadfunktion ist in einem APPinaut® Preview Beispiel nicht möglich. Sie werden statt dessen zur Pinnwand Ihres APPinaut® weitergeleitet.','APPinaut® Information');
+						window.location.href = "#learningstreamview";
+					}
+					else {
+						_thisViewRecordVideoNested.savePageTwo(event);
+					}
+					*/
 					_thisViewRecordVideoNested.savePageTwo(event);
-					// captureVideoUpload(_thisViewRecordVideoNested.localStorageSubmitform);
 				});
 				this.$el.off('click','#formbackbutton').on('click','#formbackbutton',function(event){
 					event.preventDefault();
@@ -172,7 +265,11 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				});
 				this.$el.off('click','#captureVideoRecordButton').on('click','#captureVideoRecordButton',function(event){
 					event.preventDefault();
-					captureVideoRecord();
+					if (!isMobile.any()) {
+						doAlert('Die Aufnahmefunktion ist in einem APPinaut® Preview Beispiel nicht möglich. Es wird statt dessen ein Beispielvideo verwendet.','APPinaut® Information');
+						$("#video_player").attr("src", "https://dl.dropboxusercontent.com/u/45253363/appinaut/videos/1111111111.mp4").get(0).play();
+					}
+					else captureVideoRecord();
 				});
 				$('#downloadVideoInputDiv').toggle();
 				this.$el.off('click','.downloadVideoToggleButton').on('click','.downloadVideoToggleButton',function(event){
@@ -184,7 +281,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 					_thisViewRecordVideoNested.downloadVideo();
 				});
 				
-				$('#uploadstatusbar').hide();
+				// $('#uploadstatusbar').hide();
 				// $('#videobox').hide();
 				
 				/*
@@ -202,7 +299,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 					window.resizeElement('#video_player');
 					// window.resizeElement('#video_player_1')
 				});
-
+				
 			},
 			downloadVideo: function() {
 				var _thisViewRecordVideoNested = this;
@@ -229,7 +326,7 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 						// console.log(progressEvent.loaded + " / " + progressEvent.total);
 						$('#modaltxt').html(progressEvent.loaded+" / "+progressEvent.total);
 						if (oldprogress == progressEvent.loaded) {} 
-						else window.system.modaltimeout = 5000;
+						else window.system.modaltimeout = 60000;
 						oldprogress = progressEvent.loaded;
 						
 					};
@@ -269,23 +366,25 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				$('#downloadVideoToggleButton').toggle();
 				$('#captureVideoRecordButton').toggle();
 				$('#downloadVideoInputDiv').toggle();
+				/*
 				if (window.system.contentHelper==1) {
 					$('#downloadVideoUrl').val('https://dl.dropboxusercontent.com/u/45253363/appinaut/videos/1111111111.mp4'); // http://management-consulting.marcel-durchholz.de/secure/1391304708489.mp4
 					$('#camera_file').val('file:///D:/cordova/Backbone-Require-Boilerplate-master/public_VIDEOS/testvideo.mp4');
 				}
+				*/
 			},
 			render: function() {
 				var _thisViewRecordVideoNested = this;
 				console.log('DOING render VideoRecordNestedView.js called');
 				_thisVideoRecordAttributes = _thisViewRecordVideoNested.localStorageSubmitform.models[0].attributes;
-				if (_thisVideoRecordAttributes['sliderprice']==undefined) _thisVideoRecordAttributes['sliderprice'] = "2200";
+				if (_thisVideoRecordAttributes['sliderprice']==undefined) _thisVideoRecordAttributes['sliderprice'] = "1800";
 				// console.log(_thisVideoRecordAttributes['sliderprice']);
 				_thisViewRecordVideoNested.$el.html(_.template(_thisViewRecordVideoNested.activePage, {
 					slider_price:_thisVideoRecordAttributes['sliderprice'],
 					interests:_thisViewRecordVideoNested.interests					
 				},{variable: 'video'}));
 				
-				var testvideo = 'file:///D:/cordova/Backbone-Require-Boilerplate-master/public_VIDEOS/testvideo.mp4';
+				// var testvideo = 'file:///D:/cordova/Backbone-Require-Boilerplate-master/public_VIDEOS/testvideo.mp4';
 				/*
 				if (!isMobile.any()) {
 					$('#camera_file').val('file:///D:/cordova/Backbone-Require-Boilerplate-master/public_VIDEOS/testvideo.mp4');
@@ -298,11 +397,13 @@ define(["jquery", "backbone", "models/VideoModel", "collections/videoRecordColle
 				this.$el.trigger('create');
 				sendLocalStorageToElements(_thisViewRecordVideoNested.localStorageSubmitform.models);
 				var mediaFilePath = $('#camera_file').val();
-				console.log(mediaFilePath);
+				// console.log(mediaFilePath);
 				// alert(mediaFilePath);
+				/*
 				if (window.system.contentHelper==1) {
 					attachVideoToPlayer(testvideo);
 				}
+				*/
 				hideModal();
 				this.$el.fadeIn( 500, function() {
 					$('.ui-content').scrollTop(0);

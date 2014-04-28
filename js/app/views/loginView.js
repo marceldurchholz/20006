@@ -24,6 +24,27 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 					}
 					setTimeout(function() {
 						// alert(username);
+						var _response = new Array();
+						// 16181348537294980
+						// console.log(username);
+						$.ajax({
+							url: 'http://dominik-lohmann.de:5000/users/?username='+username,
+							async: false,
+							success: function(response, textStatus, XMLHttpRequest) {
+								// console.log(response);
+								_response = response;
+							},
+							error:function (xhr, ajaxOptions, thrownError) { 
+								console.log(thrownError);
+							}
+						});
+						// console.log(_response);
+						if (_response[0] != undefined && _response[0].deleted==true) {
+							doAlert('Es ist ein Problem bei der Anmeldung mit Ihren Zugangsdaten aufgetreten.','Bitte Zugangsdaten überprüfen');
+							hideModal();
+							return(false);
+						}
+
 						dpd.users.login({username: username, password: password}, function(user, error) {
 						// dpd.users.post({username: username, password: password}, function(user, error) {
 							if (error) {
@@ -48,14 +69,17 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 										// alert(me.username);
 										$('#showMenu').show();
 										$('#showPageOptionsIcon').show();
-										var newlogincount = 0;
 										var logincount = _thisViewLogin.me.logincount;
 										if (logincount==undefined) logincount=0;
+										var newlogincount = 0;
 										var newlogincount = logincount+1;
 										dpd.users.put(_thisViewLogin.me.id, {"logincount":newlogincount}, function(result, err) { 
 											if(err) { 
 												hideModal();
 											}
+											// alert(username);
+											// alert(password);
+											window.dao.rememberUserData(username, password, '1');
 											// alert('redirecting');
 											// system.redirectToUrl(targetUrl);
 											window.location.href="#dashboard";
@@ -73,13 +97,14 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 					var password = $('#password').val();
 					var giftcode = $('#giftcodeInput').val();
 					var uid = '';
-					var sponsor = '';
+					// var sponsor = '';
 					if (username!='' && password!='') {
 						if (checkString(username)==true) {
 							var roles = ["user","seeker"];
 							var registered = dateYmdHis();
+							/*
 							$.ajax({
-								url: 'http://dominik-lohmann.de:5000/users/?roles=owner',
+								url: 'http://dominik-lohmann.de:5000/users/'+window.system.aoid,
 								async: false,
 								success: function(sponsor, textStatus, XMLHttpRequest){
 									// _thisViewLogin.ownerdata = ownerdata[0];
@@ -88,9 +113,10 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 								},
 								error:function (xhr, ajaxOptions, thrownError) { }
 							});
-							
-							if (giftcode!='') sponsor = giftcode.replace('-','').toLowerCase();
-							dpd.users.post({username: username, password: password, fullname: username, active: true, messageble: true, sponsor: sponsor.id, roles: roles, registered: registered, credits: "0", purchases:[], followers:[], following:[], logincount:"0"}, function(user, err) {
+							*/
+							_thisViewLogin.sponsor = window.system.aoid;
+							if (giftcode!='') _thisViewLogin.sponsor = giftcode.replace('-','').toLowerCase();
+							dpd.users.post({username: username, password: password, fullname: username, active: true, messageble: true, sponsor: _thisViewLogin.sponsor, roles: roles, registered: registered, credits: "0", purchases:[], followers:[], following:[], logincount:"0"}, function(user, err) {
 								// alert(user);
 								// alert(user.username);
 								if (user==null) {
@@ -113,6 +139,7 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 				},
 				initialize: function() {
 					var _thisViewLogin = this;
+					_thisViewLogin.autologin = false;
 					_thisViewLogin.redirecturl = '#myprofile';
 					showModal();
 					this.$el.hide();
@@ -122,6 +149,22 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 					_thisViewLogin = this;
 					_thisViewLogin.username = "";
 					_thisViewLogin.password = "";
+					// window.dao.rememberUserDataGet(_thisViewLogin.render);
+					// alert('first');
+					window.dao.rememberUserDataGet(_thisViewLogin.rememberUserDataCallback);
+				},
+				rememberUserDataCallback: function(userdata) {
+					// alert('second');
+					_thisViewLogin.userdata = userdata;
+					// alert(_thisViewLogin.userdata.username);
+					if (_thisViewLogin.userdata.username!='') {
+						// alert(_thisViewLogin.userdata);
+						// alert(_thisViewLogin.userdata.username);
+						_thisViewLogin.username = _thisViewLogin.userdata.username;
+						_thisViewLogin.password = _thisViewLogin.userdata.password;						
+						if (_thisViewLogin.autologin=="1") _thisViewLogin.autologin = true;
+					}
+					// alert('third');
 					_thisViewLogin.render();
 				},
 				toggleGiftcodeInput: function() {
@@ -141,6 +184,9 @@ define(["jquery", "backbone", "text!templates/sidemenusList.html", "views/Sideme
 					this.$el.off('click','.anonymlogin').on('click','.anonymlogin',function(event){event.preventDefault();_thisViewLogin.sendAnonymlogin();});
 					$('#username').val(_thisViewLogin.username);
 					$('#password').val(_thisViewLogin.password);
+					if (_thisViewLogin.autologin==true) {
+						_thisViewLogin.sendLogin('#dashboard');
+					}
 				},
 				sendAnonymlogin: function() {
 					_thisViewLogin = this;
